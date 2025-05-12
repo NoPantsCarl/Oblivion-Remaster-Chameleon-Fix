@@ -9,9 +9,7 @@ CHML  = 0x0008185C    ; Chameleon shader base
 INVS  = 0x00080BE5    ; Invisibility shader base
 CHML2 = 0x4C6E53FE    ; Additional Chameleon visual effect (confirmed from UE dump)
 
-Folder Breakdown
-
-visual/   (from OblivionRemasteredForms.zip)
+visual/   
 - BP_effectChameleon.uasset / .uexp
 - BP_effectInvisibility.uasset / .uexp
 - CHML.uasset / .uexp
