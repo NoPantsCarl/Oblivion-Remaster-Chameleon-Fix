@@ -97,15 +97,8 @@ What Could Possibly Work (Ideas / Leads / Experiments)
 - Build a fallback `.pak` mod that runs a visual effect cleaner from Blueprints if Lua fails.
 
 
-Debug Summary / Modder Context
-Tried fixing stuck Chameleon visuals from using more than one source of Chameleon. Used GetComponentsByClass with BP_effectChameleon and SendVFXEndSignal/K2_DestroyComponent, TESSync, among many other things. ActiveMagicEffects seems to read fine, but no exposed method clears the shaders. Looking for any working cleanup or visual reset after Chameleon ends.
-
-Attaching my latest code in case anyone else has ideas — been at this for days. I dumped UE4SS Lua and searched Unreal Engine structures, tried a lot with no luck. To reproduce bug: equip items 00027110, 00049393, and 00091ab2 (all with Chameleon buffs) back to back. Visual glitch appears and doesn't go away. I'm trying to force remove it when Chameleon ends by taking off the items etc.
-
-Trying to use UE4SS to detect when Chameleon ends — found the effect ID (1280133187) but can't find much else exposed in Unreal. Tried a few approaches but nothing's worked. My mod revolves around a custom Chameleon system that works, but the visuals bug out and even bSuppressEffect doesn't always fix it. Just wondering if anyone’s ever found more Chameleon-related data in the engine or if it’s hardcoded and inaccessible?
-
-From testing, it appears Chameleon triggers two separate visual shaders.
-One may be legacy/low-res, the other HD/post-process. Only one cleans up sometimes.
+Reproduce bug
+To reproduce bug: equip items 00027110, 00049393, and 00091ab2 (all with Chameleon buffs) back to back. Visual glitch appears and doesn't go away. I'm trying to force remove it when Chameleon ends by taking off the items etc. From testing, it appears Chameleon triggers two separate visual shaders. One may be legacy/low-res, the other HD/post-process. Only one cleans up sometimes.
 
 Also: already tried checking paired component – no result.
 
