@@ -66,3 +66,9 @@ From testing, it appears Chameleon triggers two separate visual shaders.
 One may be legacy/low-res, the other HD/post-process. Only one cleans up sometimes.
 
 Also: already tried checking paired component – no result.
+
+**Credits**  
+* **Kein Altar SDK Dump**  
+↳ [github.com/Kein/Altar](https://github.com/Kein/Altar)  
+* **Silvist Form Dump**  
+↳ [Oblivion Remastered Modding Discord](https://cdn.discordapp.com/attachments/1364374629128339466/1370188992414355466/OblivionRemasteredForms.zip?ex=6825d7b0&is=68248630&hm=d21050da69c00f72d9af9381fe0df1ae626ff8e2f3262fae0977369e081b86b4&))  
