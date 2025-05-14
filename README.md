@@ -34,18 +34,68 @@ Form Dump/
     Actor.ActorValuesPairingComponent:GetValue("Chameleon")
     Filtering components by "BP_effectChameleon" works with UE4SS scripting
 
-Methods Tried (Unsuccessful)
-- GetComponentsByClass(): no crash, but doesn’t clear visuals
-- K2_DestroyComponent(): no effect
-- SendVFXEndSignal() in Lua: returns nullptr
-- player.dispel 0x0008185C: works for Bound Arrow but not Chameleon
-- ActiveMagicEffects in Lua: often nil
-- TESSync.DynamicForms: not exposed
-- LoopAsync: works, but needs valid logic
-- OBSE64 plugin: can't build (missing headers)
-- Cheat Engine tracing: inconsistent
-- Reapplying Spectre Ring: clears encumbrance bug only
-- PairedComponent and all known Unreal-linked effect trees: no working cleanup found
+What I Have Learned So Far
+- Chameleon visual bug is a base game engine-level issue, not specific to any mod.
+- Stuck visuals occur when multiple Chameleon effects are added/removed quickly (especially mid-sneak).
+- `SendVFXEndSignal()` exists in `VMagicSpellVFX` but fails silently via Lua in most cases.
+- The Chameleon visual components are tied to Blueprints like `BP_effectChameleon` and shader tags like `CHML`, `CHML2`, `INVS`.
+- UE4SS Lua can detect actor values and effect form IDs using `TESSync.DynamicForms` and `ActorValuesPairingComponent:GetValue()`.
+- `FindComponentByClass` is not supported in your current UE4SS setup.
+- `GetComponents()` + filtering by name like `"BP_effectChameleon"` is a viable method for attempting cleanup.
+- Chameleon form IDs confirmed:
+    - CHML  = 0x0008185C
+    - CHML2 = 0x4C6E53FE
+    - INVS  = 0x00080BE5
+
+What Has Worked So Far
+ - Tracking Chameleon gameplay effect via: 
+    player.ActorValuesPairingComponent:GetValue("Chameleon")
+- Tracking Chameleon visual presence via:
+    TESSync.DynamicForms and GetFormID() matching CHML/CHML2/INVS
+- Executing cleanup logic only once after Chameleon ends (using hadChameleon = true flag).
+- Using `LoopAsync()` or `ExecuteWithDelay()` to check player state on a timer.
+- Finding and filtering player components by name to locate `BP_effectChameleon`.
+
+What Has Not Worked So Far
+- FindComponentByClass → results in a nil / method call error.
+- player.dispel 0x0008185C → works for Bound Arrow, not for Chameleon.
+- K2_DestroyComponent alone → often fails to clear visuals.
+- SendVFXEndSignal() on component or actor → fails silently or returns nullptr.
+- player.ActiveMagicEffects in Lua → usually nil or unreliable.
+- TESSync.DynamicForms alone → often empty or not yet populated during mod load.
+- Any method relying on console prints/debug logs → doesn’t display anything.
+- OBSE plugin approach so far has unresolved build and header issues.
+
+My Goal
+Create a universal ChameleonFix mod that:
+- Detects when the player no longer has an active Chameleon effect (spells, potions, items).
+- Immediately removes any lingering Chameleon visual effect via a reliable cleanup method.
+- Works without OBSE, Unreal Editor, or external engine hooks.
+- Uses UE4SS Lua exclusively for compatibility and ease of distribution.
+- Helps all players — not just those using your specific ESP-based sneak system.
+
+ What I'm Still Working On
+ - Finding a reliably exposed method in UE4SS or Unreal blueprints to remove the visual effect.
+- Validating whether `SendVFXEndSignal()` can be routed through a different object like VMagicSpellVFX.
+- Confirming when/if TESSync.DynamicForms is populated at runtime (e.g. during sneak/spell use).
+- Verifying if the Chameleon effect visual is bound to a particular BP component that isn’t caught by GetComponents().
+- Logging or debugging output to verify presence of visual effect components in real-time.
+
+ What I Need to Know to Fine-Tune
+
+ - Is there any exposed function or component (like VMagicSpellVFX) that successfully clears visuals?
+- Are multiple BP_effectChameleon instances being generated per source (e.g. potion + armor)?
+- Can we determine the moment TESSync becomes populated in runtime, or force-rescan it?
+- Can we hook into BP component lifecycle (OnAttach/OnRemove) via UE4SS?
+- Would a C++ plugin for OBSE64 have better access to ActiveEffectsPairingComponent or visual state?
+
+What Could Possibly Work (Ideas / Leads / Experiments)
+- Use `ActorValuesPairingComponent:GetValue("Chameleon")` and remove visuals once value = 0.
+- Hook the `SendVFXEndSignal()` function from `VMagicSpellVFX` directly using RegisterHook or C++.
+- Scan `GetComponents()` for “Chameleon” or “BP_effectChameleon” on delay loop and destroy them manually.
+- Try calling `SendVFXEndSignal("CHML")` and `SendVFXEndSignal("BP_effectChameleon")` explicitly.
+- Use UE4SS Blueprint hot-patching to override Chameleon BP logic and insert removal signals.
+- Build a fallback `.pak` mod that runs a visual effect cleaner from Blueprints if Lua fails.
 
 What Works or Looks Promising
 - ActorValuesPairingComponent:GetValue("Chameleon") in Lua
