@@ -82,7 +82,6 @@ Create a universal ChameleonFix mod that:
 - Logging or debugging output to verify presence of visual effect components in real-time.
 
  What I Need to Know to Fine-Tune
-
  - Is there any exposed function or component (like VMagicSpellVFX) that successfully clears visuals?
 - Are multiple BP_effectChameleon instances being generated per source (e.g. potion + armor)?
 - Can we determine the moment TESSync becomes populated in runtime, or force-rescan it?
@@ -97,15 +96,8 @@ What Could Possibly Work (Ideas / Leads / Experiments)
 - Use UE4SS Blueprint hot-patching to override Chameleon BP logic and insert removal signals.
 - Build a fallback `.pak` mod that runs a visual effect cleaner from Blueprints if Lua fails.
 
-What Works or Looks Promising
-- ActorValuesPairingComponent:GetValue("Chameleon") in Lua
-- Filtering GetComponents() for "BP_effectChameleon"
-- CS-based script workaround using fTotalChameleon
-- Lua checking sneak/combat/detection: stable
-- Plugin scaffolding for OBSE64 (future-proof)
 
 Debug Summary / Modder Context
-
 Tried fixing stuck Chameleon visuals from using more than one source of Chameleon. Used GetComponentsByClass with BP_effectChameleon and SendVFXEndSignal/K2_DestroyComponent, TESSync, among many other things. ActiveMagicEffects seems to read fine, but no exposed method clears the shaders. Looking for any working cleanup or visual reset after Chameleon ends.
 
 Attaching my latest code in case anyone else has ideas — been at this for days. I dumped UE4SS Lua and searched Unreal Engine structures, tried a lot with no luck. To reproduce bug: equip items 00027110, 00049393, and 00091ab2 (all with Chameleon buffs) back to back. Visual glitch appears and doesn't go away. I'm trying to force remove it when Chameleon ends by taking off the items etc.
