@@ -72,7 +72,7 @@ Create a universal ChameleonFix mod that:
 - Immediately removes any lingering Chameleon visual effect via a reliable cleanup method.
 - Works without OBSE, Unreal Editor, or external engine hooks.
 - Uses UE4SS Lua exclusively for compatibility and ease of distribution.
-- Helps all players — not just those using your specific ESP-based sneak system.
+- Helps all players — not just those using my specific ESP-based sneak system.
 
  What I'm Still Working On
  - Finding a reliably exposed method in UE4SS or Unreal blueprints to remove the visual effect.
