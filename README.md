@@ -40,7 +40,6 @@ end
 - Chameleon form IDs confirmed:
   - CHML  = 0x0008185C
   - CHML2 = 0x4C6E53FE
-  - INVS  = 0x00080BE5
 
 ## What Has Worked So Far
 
