@@ -1,6 +1,6 @@
 # ChameleonFix – Oblivion Remastered
 
-This mod and diagnostic reference focuses on identifying and cleaning up stuck Chameleon visual effects in Oblivion Remastered using UE4SS Lua scripting.
+This mod and diagnostic reference focuses on identifying and cleaning up stuck Chameleon visual effects in Oblivion Remastered.
 
 ## Summary
 
