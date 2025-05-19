@@ -1,61 +1,30 @@
-local DELAY_MS = 2000
-local CHML_FORMID = 0x0008185C
-local CHML2_FORMID = 0x4C6E53FE
-local INVS_FORMID = 0x00080BE5
+local key = "Nine"
+local keyPressed = false
 
-local hadChameleon = false
+local function DestroyChameleonVisuals()
+    print("[ChameleonFix] Searching for BPCI_StatusEffect_Chameleon_C actors...")
 
-local function GetPlayer()
-    return FindFirstOf("BP_OblivionPlayerCharacter_C")
-end
+    local count = 0
+    local actors = FindAllOf("BPCI_StatusEffect_Chameleon_C")
 
--- Safely check if any form in TESSync.DynamicForms is a Chameleon effect
-local function HasChameleonActive()
-    local forms = TESSync and TESSync.DynamicForms
-    if not forms then return false end
-
-    for _, form in pairs(forms) do
-        if form and form.GetFormID and type(form.GetFormID) == "function" then
-            local id = form:GetFormID()
-            if id == CHML_FORMID or id == CHML2_FORMID or id == INVS_FORMID then
-                return true
-            end
+    for _, actor in ipairs(actors or {}) do
+        if actor and actor:IsValid() then
+            local name = actor:GetFullName()
+            print("[ChameleonFix] Destroying: " .. name)
+            actor:K2_DestroyActor()
+            count = count + 1
         end
     end
-    return false
+
+    print("[ChameleonFix] Total actors destroyed: " .. tostring(count))
 end
 
--- Removes stuck Chameleon visuals
-local function RemoveChameleonVisuals(player)
-    if not player then return end
-
-    if player.SendVFXEndSignal then
-        player:SendVFXEndSignal("CHML") -- Try tag cleanup
-        player:SendVFXEndSignal("BP_effectChameleon") -- Backup name match
-    end
-
-    -- Clean up lingering visual components
-    local comps = player:GetComponents()
-    for _, comp in ipairs(comps or {}) do
-        if comp and comp:IsValid() then
-            local name = comp:GetFullName()
-            if name:find("Chameleon") or name:find("BP_effectChameleon") then
-                if comp.SendVFXEndSignal then comp:SendVFXEndSignal() end
-                comp:K2_DestroyComponent()
-            end
+RegisterHook("/Script/Altar.VMainMenuViewModel:LoadInstanceOfLevels", function()
+    RegisterHook("/Game/Dev/Controllers/BP_AltarPlayerController.BP_AltarPlayerController_C:InpActEvt_AnyKey_K2Node_InputKeyEvent_1", function(_, Key)
+        if Key:get().KeyName:ToString() ~= key then return end
+        if not keyPressed then
+            DestroyChameleonVisuals()
         end
-    end
-end
-
--- Main loop
-LoopAsync(DELAY_MS, function()
-    local player = GetPlayer()
-    if not player then return end
-
-    if HasChameleonActive() then
-        hadChameleon = true
-    elseif hadChameleon then
-        RemoveChameleonVisuals(player)
-        hadChameleon = false
-    end
+        keyPressed = not keyPressed
+    end)
 end)
