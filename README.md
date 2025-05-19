@@ -26,6 +26,7 @@ for _, actor in ipairs(FindAllOf("BPCI_StatusEffect_Chameleon_C") or {}) do
     end
 end
 ```
+![ChameleonFix Cleanup Proof](https://i.postimg.cc/Y2zrdYP9/Capture.png)
 
 ## What I Have Learned So Far
 
