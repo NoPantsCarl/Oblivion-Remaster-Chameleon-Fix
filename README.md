@@ -1,106 +1,85 @@
-Chameleon / Invisibility Debug Reference
-Oblivion Remastered – UE5 Visual Cleanup Research
+# ChameleonFix – Oblivion Remastered
 
-This folder contains all known assets, headers, and technical details tied to the Chameleon visual bug in Oblivion Remastered (UE5-based). Use this to build plugins, Lua scripts, or mods that remove or suppress lingering Chameleon visuals.
+This mod and diagnostic reference focuses on identifying and cleaning up stuck Chameleon visual effects in Oblivion Remastered using UE4SS Lua scripting.
 
-Core FormIDs
+## Summary
 
-CHML  = 0x0008185C    ; Chameleon shader base
-INVS  = 0x00080BE5    ; Invisibility shader base
-CHML2 = 0x4C6E53FE    ; Additional Chameleon visual effect (confirmed from UE dump)
+The Chameleon visual effect in Oblivion Remastered can become permanently stuck when multiple instances overlap or are removed improperly. This is a rendering-level bug caused when the engine fails to call `OnTextureEffectStop`, leaving the Chameleon material applied permanently to the player.
 
-visual/   
-- BP_effectChameleon.uasset / .uexp
-- BP_effectInvisibility.uasset / .uexp
-- CHML.uasset / .uexp
-- INVS.uasset / .uexp
+## Confirmed Behavior
 
-These are the actual visual effects and shaders you may need to remove via Lua or C++ plugin.
+- The effect is applied using `BP_effectChameleon`, which spawns as `BPCI_StatusEffect_Chameleon_C`.
+- The shader comes from `MIC_StatusEffect_Chameleon` and its variants.
+- When the engine fails to clean up the shader, it remains visually baked into the player.
+- `SendVFXEndSignal()` has no effect because no `AVMagicSpellVFX` instance is spawned.
+- Destroying `BPCI_StatusEffect_Chameleon_C` will stop the effect's source actor but does not revert the shader.
+- The only reliable way to track Chameleon gameplay state is via `ActorValuesPairingComponent:GetValue("Chameleon")`.
 
-SDK Dump/
-- VMagicSpellVFX.h
-  → Exposes SendVFXEndSignal(AActor*) — call to forcibly clear stuck visuals.
-- VOblivionRuntimeSettings.h
-  → Shows internal shader binding:
-      TSoftClassPtr<UTESEffectShader> EffectChameleon;
-      TSoftClassPtr<UTESEffectShader> EffectInvisibility;
-- TESForm.h, VPairedCharacter.h, VPairedPawn.h
-  → Used to trace actor status/effects with OBSE64 later.
+## Working Cleanup Script
 
-Form Dump/
-- Lua-accessible player state logic:
-    Actor:IsSneaking()
-    Actor:IsInCombat()
-    Actor.ActorValuesPairingComponent:GetValue("Chameleon")
-    Filtering components by "BP_effectChameleon" works with UE4SS scripting
+This removes the spawned Chameleon visual actor, though the baked shader may still remain:
 
-What I Have Learned So Far
+```lua
+for _, actor in ipairs(FindAllOf("BPCI_StatusEffect_Chameleon_C") or {}) do
+    if actor and actor:IsValid() then
+        actor:K2_DestroyActor()
+    end
+end
+```
+
+## What I Have Learned So Far
+
 - Chameleon visual bug is a base game engine-level issue, not specific to any mod.
 - Stuck visuals occur when multiple Chameleon effects are added/removed quickly (especially mid-sneak).
 - `SendVFXEndSignal()` exists in `VMagicSpellVFX` but fails silently via Lua in most cases.
 - The Chameleon visual components are tied to Blueprints like `BP_effectChameleon` and shader tags like `CHML`, `CHML2`, `INVS`.
 - UE4SS Lua can detect actor values and effect form IDs using `TESSync.DynamicForms` and `ActorValuesPairingComponent:GetValue()`.
-- `FindComponentByClass` is not supported in your current UE4SS setup.
+- `FindComponentByClass` is not supported in the current UE4SS setup.
 - `GetComponents()` + filtering by name like `"BP_effectChameleon"` is a viable method for attempting cleanup.
 - Chameleon form IDs confirmed:
-    - CHML  = 0x0008185C
-    - CHML2 = 0x4C6E53FE
-    - INVS  = 0x00080BE5
+  - CHML  = 0x0008185C
+  - CHML2 = 0x4C6E53FE
+  - INVS  = 0x00080BE5
 
-What Has Worked So Far
- - Tracking Chameleon gameplay effect via: 
-    player.ActorValuesPairingComponent:GetValue("Chameleon")
+## What Has Worked So Far
+
+- Tracking Chameleon gameplay effect via:
+  `player.ActorValuesPairingComponent:GetValue("Chameleon")`
 - Tracking Chameleon visual presence via:
-    TESSync.DynamicForms and GetFormID() matching CHML/CHML2/INVS
-- Executing cleanup logic only once after Chameleon ends (using hadChameleon = true flag).
+  `TESSync.DynamicForms` and `GetFormID()` matching CHML/CHML2/INVS
+- Executing cleanup logic only once after Chameleon ends (using `hadChameleon = true` flag).
 - Using `LoopAsync()` or `ExecuteWithDelay()` to check player state on a timer.
 - Finding and filtering player components by name to locate `BP_effectChameleon`.
 
-What Has Not Worked So Far
-- FindComponentByClass → results in a nil / method call error.
-- player.dispel 0x0008185C → works for Bound Arrow, not for Chameleon.
-- K2_DestroyComponent alone → often fails to clear visuals.
-- SendVFXEndSignal() on component or actor → fails silently or returns nullptr.
-- player.ActiveMagicEffects in Lua → usually nil or unreliable.
-- TESSync.DynamicForms alone → often empty or not yet populated during mod load.
+## What Has Not Worked So Far
+
+- `FindComponentByClass` → results in a nil or method call error.
+- `player.dispel 0x0008185C` → works for Bound Arrow, not for Chameleon.
+- `K2_DestroyComponent()` alone → often fails to clear visuals.
+- `SendVFXEndSignal()` on component or actor → fails silently or returns nullptr.
+- `player.ActiveMagicEffects` in Lua → usually nil or unreliable.
+- `TESSync.DynamicForms` alone → often empty or not yet populated during mod load.
 - Any method relying on console prints/debug logs → doesn’t display anything.
 - OBSE plugin approach so far has unresolved build and header issues.
 
-My Goal
-Create a universal ChameleonFix mod that:
-- Detects when the player no longer has an active Chameleon effect (spells, potions, items).
-- Immediately removes any lingering Chameleon visual effect via a reliable cleanup method.
-- Works without OBSE, Unreal Editor, or external engine hooks.
-- Uses UE4SS Lua exclusively for compatibility and ease of distribution.
-- Helps all players — not just those using my specific ESP-based sneak system.
+## Reproduction Steps
 
- What I'm Still Working On
- - Finding a reliably exposed method in UE4SS or Unreal blueprints to remove the visual effect.
-- Validating whether `SendVFXEndSignal()` can be routed through a different object like VMagicSpellVFX.
-- Confirming when/if TESSync.DynamicForms is populated at runtime (e.g. during sneak/spell use).
-- Verifying if the Chameleon effect visual is bound to a particular BP component that isn’t caught by GetComponents().
-- Logging or debugging output to verify presence of visual effect components in real-time.
+To reproduce the stuck Chameleon shader:
+1. Equip multiple Chameleon-enchanted items (examples: `00027110`, `00049393`, `00091ab2`) back to back.
+2. Remove them quickly or toggle sneak.
+3. The Chameleon visual becomes permanently stuck.
 
- What I Need to Know to Fine-Tune
- - Is there any exposed function or component (like VMagicSpellVFX) that successfully clears visuals?
-- Are multiple BP_effectChameleon instances being generated per source (e.g. potion + armor)?
-- Can we determine the moment TESSync becomes populated in runtime, or force-rescan it?
-- Can we hook into BP component lifecycle (OnAttach/OnRemove) via UE4SS?
-- Would a C++ plugin for OBSE64 have better access to ActiveEffectsPairingComponent or visual state?
+## Visual Confirmation
 
-What Could Possibly Work (Ideas / Leads / Experiments)
-- Use `ActorValuesPairingComponent:GetValue("Chameleon")` and remove visuals once value = 0.
-- Hook the `SendVFXEndSignal()` function from `VMagicSpellVFX` directly using RegisterHook or C++.
-- Scan `GetComponents()` for “Chameleon” or “BP_effectChameleon” on delay loop and destroy them manually.
-- Try calling `SendVFXEndSignal("CHML")` and `SendVFXEndSignal("BP_effectChameleon")` explicitly.
-- Use UE4SS Blueprint hot-patching to override Chameleon BP logic and insert removal signals.
-- Build a fallback `.pak` mod that runs a visual effect cleaner from Blueprints if Lua fails.
+This screenshot shows the condition when the shader remains on the player without any active effect actor:
 
+![Bugged Visual – Shader Remains]([https://i.postimg.cc/nVRv6by6/it-does-NOT-trigger-when-you-get-the-bug.png))
 
-Reproduce bug
-To reproduce bug: equip items 00027110, 00049393, and 00091ab2 (all with Chameleon buffs) back to back. Visual glitch appears and doesn't go away. I'm trying to force remove it when Chameleon ends by taking off the items etc. From testing, it appears Chameleon triggers two separate visual shaders. One may be legacy/low-res, the other HD/post-process. Only one cleans up sometimes.
+## Next Steps
 
-Also: already tried checking paired component – no result.
+- Investigate Blueprint-based fallback that can reset the material on `OnEffectRemoved`.
+- Confirm if UE4SS can manipulate the player mesh’s materials directly (requires further exploration).
+- Optional: build a lightweight C++ plugin to refresh or replace the mesh material when the visual bug is detected.
 
 **Credits**  
 * **Kein Altar SDK Dump**  
