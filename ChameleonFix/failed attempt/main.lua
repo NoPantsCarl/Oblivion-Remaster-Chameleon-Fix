@@ -1,30 +1,56 @@
-local key = "Nine"
-local keyPressed = false
+-- ChameleonFix/scripts/main.lua
 
-local function DestroyChameleonVisuals()
-    print("[ChameleonFix] Searching for BPCI_StatusEffect_Chameleon_C actors...")
+local DELAY_MS = 200
+local hasHadChameleon = false
 
-    local count = 0
-    local actors = FindAllOf("BPCI_StatusEffect_Chameleon_C")
+-- crude delay function using busy loop (confirmed working)
+local function crude_delay()
+    for i = 1, 2000000 do end
+end
 
-    for _, actor in ipairs(actors or {}) do
-        if actor and actor:IsValid() then
-            local name = actor:GetFullName()
-            print("[ChameleonFix] Destroying: " .. name)
-            actor:K2_DestroyActor()
-            count = count + 1
+-- wait for TESSync and DynamicForms
+while true do
+    local syncModel = StaticFindObject("/Script/Oblivion.TESSync")
+    if syncModel and syncModel:IsValid() then
+        local dynamicForms = syncModel.DynamicForms
+        if dynamicForms and dynamicForms:IsValid() then
+            print("[ChameleonFix] TESSync and DynamicForms are valid!")
+            break
+        end
+    end
+    print("[ChameleonFix] Waiting for TESSync...")
+    crude_delay()
+end
+
+-- Begin chameleon monitor loop
+while true do
+    local player = StaticFindObject("/Game/OblivionPlayerCharacterBP.OblivionPlayerCharacterBP_C")
+    if player and player:IsValid() then
+        local effects = player:GetActiveMagicEffects()
+        local hasChameleonNow = false
+
+        for i = 0, effects:Num() - 1 do
+            local effect = effects:Get(i)
+            if effect and effect:IsValid() then
+                local name = effect:GetName():ToString()
+                if name:find("Chameleon") then
+                    hasChameleonNow = true
+                    break
+                end
+            end
+        end
+
+        if hasHadChameleon and not hasChameleonNow then
+            local fx = StaticFindObject("/Game/Forms/miscellaneous/effectshader/particularcases/BP_effectChameleon.Default__BP_effectChameleon_C")
+            if fx and fx:IsValid() then
+                fx:EndEffect()
+                print("[ChameleonFix] Ended lingering Chameleon effect.")
+            end
+            hasHadChameleon = false
+        elseif hasChameleonNow then
+            hasHadChameleon = true
         end
     end
 
-    print("[ChameleonFix] Total actors destroyed: " .. tostring(count))
+    crude_delay()
 end
-
-RegisterHook("/Script/Altar.VMainMenuViewModel:LoadInstanceOfLevels", function()
-    RegisterHook("/Game/Dev/Controllers/BP_AltarPlayerController.BP_AltarPlayerController_C:InpActEvt_AnyKey_K2Node_InputKeyEvent_1", function(_, Key)
-        if Key:get().KeyName:ToString() ~= key then return end
-        if not keyPressed then
-            DestroyChameleonVisuals()
-        end
-        keyPressed = not keyPressed
-    end)
-end)
