@@ -73,7 +73,7 @@ To reproduce the stuck Chameleon shader:
 
 This screenshot shows the condition when the shader remains on the player without any active effect actor:
 
-![Bugged Visual – Shader Remains]([https://i.postimg.cc/nVRv6by6/it-does-NOT-trigger-when-you-get-the-bug.png))
+![Bugged Shader Remains](https://i.postimg.cc/nVRv6by6/it-does-NOT-trigger-when-you-get-the-bug.png)
 
 ## Next Steps
 
@@ -81,7 +81,7 @@ This screenshot shows the condition when the shader remains on the player withou
 - Confirm if UE4SS can manipulate the player mesh’s materials directly (requires further exploration).
 - Optional: build a lightweight C++ plugin to refresh or replace the mesh material when the visual bug is detected.
 
-**Credits**  
+## **Credits**  
 * **Kein Altar SDK Dump**  
 ↳ [github.com/Kein/Altar](https://github.com/Kein/Altar)  
 * **Silvist Form Dump**  
