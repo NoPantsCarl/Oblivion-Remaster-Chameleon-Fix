@@ -17,6 +17,20 @@ local function DestroyChameleonVisuals()
     end
 
     print("[ChameleonFix] Total actors destroyed: " .. tostring(count))
+
+    -- Attempt to refresh appearance via CharacterAppearancePairingComponent
+    local player = FindFirstOf("BP_OblivionPlayerCharacter_C")
+    if player and player:IsValid() then
+        local comp = player.CharacterAppearancePairingComponent
+        if comp and comp:IsValid() then
+            print("[ChameleonFix] Calling RefreshCharacterAppearance...")
+            comp:RefreshCharacterAppearance()
+        else
+            print("[ChameleonFix] CharacterAppearancePairingComponent not found or invalid.")
+        end
+    else
+        print("[ChameleonFix] Player not found or invalid.")
+    end
 end
 
 RegisterHook("/Script/Altar.VMainMenuViewModel:LoadInstanceOfLevels", function()
