@@ -10,7 +10,19 @@ local function DestroyChameleonVisuals()
     for _, actor in ipairs(actors or {}) do
         if actor and actor:IsValid() then
             local name = actor:GetFullName()
-            print("[ChameleonFix] Destroying: " .. name)
+            print("[ChameleonFix] Processing: " .. name)
+
+            -- Access the known field without crashing
+            local niagara = actor["StatusEffect VFX"]
+            if niagara and niagara:IsValid() then
+                print("[ChameleonFix] Found NiagaraComponent 'StatusEffect VFX' — resetting system.")
+                niagara:SetVisibility(false, true)
+                niagara:Deactivate()
+                niagara:ResetSystem()
+            else
+                print("[ChameleonFix] NiagaraComponent 'StatusEffect VFX' not found or invalid.")
+            end
+
             actor:K2_DestroyActor()
             count = count + 1
         end
@@ -18,7 +30,6 @@ local function DestroyChameleonVisuals()
 
     print("[ChameleonFix] Total actors destroyed: " .. tostring(count))
 
-    -- Attempt to refresh appearance via CharacterAppearancePairingComponent
     local player = FindFirstOf("BP_OblivionPlayerCharacter_C")
     if player and player:IsValid() then
         local comp = player.CharacterAppearancePairingComponent
