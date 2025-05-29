@@ -12,7 +12,7 @@ local function DestroyChameleonVisuals()
             local name = actor:GetFullName()
             print("[ChameleonFix] Processing: " .. name)
 
-            -- Access the known field without crashing
+            -- Access NiagaraComponent
             local niagara = actor["StatusEffect VFX"]
             if niagara and niagara:IsValid() then
                 print("[ChameleonFix] Found NiagaraComponent 'StatusEffect VFX' — resetting system.")
@@ -21,6 +21,24 @@ local function DestroyChameleonVisuals()
                 niagara:ResetSystem()
             else
                 print("[ChameleonFix] NiagaraComponent 'StatusEffect VFX' not found or invalid.")
+            end
+
+            -- Call known working methods with nil guards
+            if actor.VStatusEffectTarget_OnTextureEffectStop then
+                print("[ChameleonFix] Calling VStatusEffectTarget_OnTextureEffectStop...")
+                pcall(function() actor:VStatusEffectTarget_OnTextureEffectStop() end)
+            end
+            if actor.Pawn_OnTextureEffectStop then
+                print("[ChameleonFix] Calling Pawn_OnTextureEffectStop...")
+                pcall(function() actor:Pawn_OnTextureEffectStop() end)
+            end
+            if actor.OnStatusEffectEnd then
+                print("[ChameleonFix] Calling OnStatusEffectEnd...")
+                pcall(function() actor:OnStatusEffectEnd() end)
+            end
+            if actor.RemoveStatusEffect then
+                print("[ChameleonFix] Calling RemoveStatusEffect...")
+                pcall(function() actor:RemoveStatusEffect() end)
             end
 
             actor:K2_DestroyActor()
