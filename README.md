@@ -84,7 +84,7 @@ end
 - `TESSync.DynamicForms` alone → often empty or not yet populated during mod load.
 - Any method relying on console prints/debug logs → doesn’t display anything.
 - OBSE plugin approach so far has unresolved build and header issues.
-- `RegisterKeyBind()` in OBSE64 Lua fails due to incorrect overload use.
+- `RegisterKeyBind()` in Lua fails due to incorrect overload use.
 - `StatusEffectComponent.Mesh_Ignore_List` is sometimes not a valid table (causes crashes if not checked).
 - Trying to call functions like `Remove_Status_Effect_on_Component()` on nil mesh entries can crash the game.
 - Attempting to clean visuals after they're already "baked" into the mesh still leaves ghost shaders active.
