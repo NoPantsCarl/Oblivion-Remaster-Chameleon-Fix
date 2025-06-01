@@ -83,11 +83,22 @@ end
 - `player.ActiveMagicEffects` in Lua → usually nil or unreliable.
 - `TESSync.DynamicForms` alone → often empty or not yet populated during mod load.
 - Any method relying on console prints/debug logs → doesn’t display anything.
-- OBSE plugin approach so far has unresolved build and header issues.
-- `RegisterKeyBind()` in Lua fails due to incorrect overload use.
+- OBSE plugin approach → not viable yet due to missing 64-bit build support for Oblivion Remastered.
+- `RegisterKeyBind()` in Lua fails due to incorrect overload use (e.g., passing string instead of key code).
 - `StatusEffectComponent.Mesh_Ignore_List` is sometimes not a valid table (causes crashes if not checked).
-- Trying to call functions like `Remove_Status_Effect_on_Component()` on nil mesh entries can crash the game.
+- Calling `Remove_Status_Effect_on_Component()` on nil mesh entries can crash the game.
 - Attempting to clean visuals after they're already "baked" into the mesh still leaves ghost shaders active.
+- Waiting for `TESSync.DynamicForms` to become valid using tight loop with `StaticFindObject("/Script/Oblivion.TESSync")` — causes hangs or excessive delay.
+- Polling `player:GetActiveMagicEffects()` and matching names like `"Chameleon"` — often fails to detect visual state correctly.
+- Calling `EndEffect()` on `BP_effectChameleon.Default__BP_effectChameleon_C` — has no impact.
+- Expecting `DynamicForms` to directly expose `BP_effectChameleon` instance — unreliable or nil.
+- Using `crude_delay()` to time or debounce transitions — introduced instability.
+- Hooking or invoking `OnTextureEffectStop` directly (e.g., not via safe hotkey or guarded logic) — causes instant crash to desktop (CTD).
+- Attempting to hook into `TESForm`, `TESEffect`, or related game data structures — leads to immediate crashes or null reference exceptions.
+- Trying to interact directly with `NiagaraSystemComponent` effects through blueprint traversal — typically returns nil or causes CTDs.
+- Building C++ plugin workarounds for material reset or post-effect cleanup — repeatedly caused crashes to desktop or unexpected behavior.
+- Editing PAK files to change shader bindings or visual mappings — has no noticeable impact or causes boot failures.
+- Replacing Blueprint assets directly — leads to game crash or asset load errors.
 
 
 ## Reproduction Steps
